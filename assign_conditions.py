@@ -19,6 +19,7 @@ def mk_output_paths(SID, toppath):
     Path(os.path.join('data', f'subj{str(SID).zfill(3)}', 'runfiles')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join('data', f'subj{str(SID).zfill(3)}','matfiles')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join('data', f'subj{str(SID).zfill(3)}','timingfiles')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join('data', f'subj{str(SID).zfill(3)}','edfs')).mkdir(parents=True, exist_ok=True)
 
 
 def shuffle_trials(trials, n_blocks):

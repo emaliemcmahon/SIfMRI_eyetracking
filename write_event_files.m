@@ -1,11 +1,10 @@
-function write_event_files(subjName,run_number,ses_number,T)
+function write_event_files(subjName,run_number,T)
 % % Makes the para files from the run of the localizer.
 % %%Written by EG McMahon
 % 
 if nargin < 1
     subjName=77;
     run_number=1;
-    ses_number = 1; 
 end
 
 %% BIDS
@@ -14,7 +13,7 @@ end
 %TSV files expected in BIDS format
 bidsoutpath = fullfile('data', ['subj',sprintf('%03d', subjName)], 'bids');
 if ~exist(bidsoutpath); mkdir(bidsoutpath); end 
-bids_sname = ['sub-',sprintf('%02d', subjName), '_ses-', sprintf('%02d', ses_number)]; 
+bids_sname = ['sub-',sprintf('%02d', subjName)]; 
 
 
 conds = T.condition + 1;

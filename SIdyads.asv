@@ -1,4 +1,4 @@
-function run_number = SIdyads(subjName, run_number, with_Eyelink)
+function run_number = SIdyads(subjName, run_number, ses_number, with_Eyelink)
 % Presents the social interaction localizer task
 % Inputs:
 % subjName as an integer used when saving and loading the sequences
@@ -12,6 +12,7 @@ function run_number = SIdyads(subjName, run_number, with_Eyelink)
 if nargin < 1
     subjName = 77;
     run_number = [];
+    ses_number = 2;
     with_Eyelink = 0;
 end
 
@@ -21,7 +22,7 @@ topout = fullfile(curr, 'data', ['subj',sprintf('%03d', subjName)]);
 matout = fullfile(topout, 'matfiles');
 timingout = fullfile(topout, 'timingfiles');
 runfiles = fullfile(topout,'runfiles');
-edfout = fullfile(topout, 'edfs');
+path2edf = fullfile(topout, 'edfs');
 
 if ~exist(topout, 'dir')
     s=sprintf('Run files do not exist of subject %g. Make run files before continuing.', subjName);
@@ -46,9 +47,48 @@ if isempty(run_number)
     end
 end
 
-s=sprintf('Subject number is %g. Run number is %g. ', subjName, run_number);
+s=sprintf('Subject number is %g. Session number is %g. Run number is %g. ', subjName, ses_number, run_number);
 fprintf('\n%s\n\n ',WrapString(s));
 
+if with_Eyelink
+    if EyelinkInit()~= 1
+        return;
+    end;
+    
+    el=EyelinkInitDefaults(w);%window is the window you have opened with screen function
+    
+    % open file to record data to
+    Eyelink('Openfile', edfFile);
+    
+    % this line will perform the calibration
+    EyelinkDoTrackerSetup(el);
+    
+    % set up configurations.
+    Eyelink('command', 'calibration_type = HV5');
+    Eyelink('command', 'recording_parse_type = GAZE');
+    Eyelink('command', 'saccade_acceleration_threshold = 8000');
+    Eyelink('command', 'saccade_velocity_threshold = 30');
+    Eyelink('command', 'saccade_motion_threshold = 0.15');
+    Eyelink('command', 'saccade_pursuit_fixup = 60');
+    
+    %	set EDF file contents
+    Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
+    Eyelink('command', 'file_sample_data  = LEFT,RIGHT,GAZE,GAZERES,HREF,AREA');
+    Eyelink('command', 'file_event_data  = GAZE,GAZERES,AREA,VELOCITY,HREF');
+    
+    %	set link data (used for gaze cursor)
+    Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
+    Eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,GAZERES,HREF,AREA');
+    Eyelink('command', 'link_event_data  = GAZE,GAZERES,AREA,VELOCITY,HREF');
+    Eyelink('StartRecording');
+    % record a few samples before we actually start displaying
+    WaitSecs(0.1);
+ 
+    
+    eyeLinkCheck(w,xo,yo); %Additional Eyelink Validation that saves the
+    %position at the beginning of the block data to help diagnose systematic
+    %errors.
+end
 
 %% load video list
 ftoread = dir(fullfile(runfiles,['run',sprintf('%03d', run_number),'*.csv']));
@@ -139,62 +179,26 @@ instructions='Watch the people in each video. If there are more than 2 people, h
 DrawFormattedText2(instructions,'win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
 Screen('Flip', win);
 
-%% Init eyelink
-
-if with_Eyelink
-    if EyelinkInit()~= 1
-        return;
-    end
-    
-    edfFile=fullfile(edfout,['run', sprintf('%03d', run_number) '_',curr_date,'.edf']);
-    el=EyelinkInitDefaults(w);%window is the window you have opened with screen function
-    
-    % open file to record data to
-    Eyelink('Openfile', edfFile);
-    
-    % this line will perform the calibration
-    EyelinkDoTrackerSetup(el);
-    
-    % set up configurations.
-    Eyelink('command', 'calibration_type = HV5');
-    Eyelink('command', 'recording_parse_type = GAZE');
-    Eyelink('command', 'saccade_acceleration_threshold = 8000');
-    Eyelink('command', 'saccade_velocity_threshold = 30');
-    Eyelink('command', 'saccade_motion_threshold = 0.15');
-    Eyelink('command', 'saccade_pursuit_fixup = 60');
-    
-    %	set EDF file contents
-    Eyelink('command', 'file_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
-    Eyelink('command', 'file_sample_data  = LEFT,RIGHT,GAZE,GAZERES,HREF,AREA');
-    Eyelink('command', 'file_event_data  = GAZE,GAZERES,AREA,VELOCITY,HREF');
-    
-    %	set link data (used for gaze cursor)
-    Eyelink('command', 'link_event_filter = LEFT,RIGHT,FIXATION,SACCADE,BLINK,MESSAGE,BUTTON');
-    Eyelink('command', 'link_sample_data  = LEFT,RIGHT,GAZE,GAZERES,HREF,AREA');
-    Eyelink('command', 'link_event_data  = GAZE,GAZERES,AREA,VELOCITY,HREF');
-    Eyelink('StartRecording');
-    % record a few samples before we actually start displaying
-    WaitSecs(0.1);
-    
-    eyeLinkCheck(w,x0,y0); %Additional Eyelink Validation that saves the
-    %position at the beginning of the block data to help diagnose systematic
-    %errors.
-end
-
 %% WAIT FOR TRIGGER TO START
 still_loading = 1;
 wait_to_start = GetSecs();
 if trigger
+    IOPort('Flush', P4); %flush event buffer
     while 1
-        if KbCheck
-            break; 
+        [pulse,~,~] = IOPort('Read',P4,0,1);
+        disp(pulse);
+        if ~isempty(pulse) && (pulse == pulse_num)
+            break;
         end
         
         if still_loading
             movie(1) = Screen('OpenMovie', win, T.movie_path{1}, async, preloadsecs);
             if movie(1) > 0; still_loading = 0; end
         end
+        
     end
+    IOPort('Flush', P4);
+    clear pulse
 else
     while (GetSecs-wait_to_start<0.5)
         if still_loading
@@ -209,6 +213,7 @@ end
 % experiment start time
 try
     start = GetSecs();
+    ready_to_play_next = 0;
     Screen('Flip', win);
     
     % wait 2 TRs to start
@@ -229,25 +234,10 @@ try
         trial_end = trial_start + stimulus_length;
         iti_end = trial_end + iti_length + T.added_TRs(itrial)*1.5;
         T.onset_time(itrial) = trial_start - start;
-        
-        if with_Eyelink %inside the trial function
-            % these messages will be recorded in the output file determining the begining of the trial
-            Eyelink('Message', 'TRIAL_VAR_LABELS video condition');%change VAR1 and VAR2 to your desired variables
-            Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}, T.condition{itrial}]);
-            Eyelink('Message', ['TRIALID ', num2str(itrial)]);
-            Eyelink('Message', 'Begining of the trial');
-        end
-        
         while 1
             if frame_counter == 90 || GetSecs > (trial_end-(1/60))
                 break;
             end
-            
-            if with_Eyelink
-                Eyelink('Message','Rest off');
-                Eyelink('Message','Stimulus start');
-            end
-            
             tex = Screen('GetMovieImage', win, movie(itrial), blocking);
             Screen('DrawTexture', win, tex, [], dispSize);
             Screen('Flip', win);
@@ -259,9 +249,19 @@ try
             end
             
             if ~response
-                if KbCheck
-                    response = 1;
-                    T.response(itrial) = 1;
+                if trigger
+                    %check accuracy
+                    [pulse,~] = IOPort('Read',P4,0,1);
+                    if ~isempty(pulse) && (pulse == response_num)
+                        response = 1;
+                        T.response(itrial) = 1;
+                    end
+                    IOPort('Flush', P4); clear pulse;
+                elseif ~trigger
+                    if KbCheck
+                        response = 1;
+                        T.response(itrial) = 1;
+                    end
                 end
             end
             frame_counter = frame_counter + 1;
@@ -273,11 +273,7 @@ try
         T.duration(itrial) = real_trial_end - trial_start;
         Screen('CloseMovie', movie(itrial));
         
-        if with_Eyelink
-            Eyelink('Message','Stimulus Off');
-            Eyelink('Message','Rest Start');
-        end
-        
+        ready_to_play_next = 0;
         while (GetSecs<iti_end)
             if still_loading && itrial ~= n_trials
                 movie(itrial+1) = Screen('OpenMovie', win, T.movie_path{itrial+1}, async, preloadsecs);
@@ -285,56 +281,31 @@ try
             end
             
             if ~response
-                if KbCheck
-                    response = 1;
-                    T.response(itrial) = 1;
+                if trigger
+                    %check accuracy
+                    [pulse,~] = IOPort('Read',P4,0,1);
+                    if ~isempty(pulse) && (pulse == 244)
+                        response = 1;
+                        T.response(itrial) = 1;
+                    end
+                    IOPort('Flush', P4); clear pulse;
+                elseif ~trigger
+                    if KbCheck
+                        response = 1;
+                        T.response(itrial) = 1;
+                    end
                 end
             end
         end
         GetSecs - trial_start
-        
-        if with_Eyelink
-            Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial))]);
-            Eyelink('Message',['TRIAL_RESULT ',num2str(T.response(itrial))]);
-            Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial) == T.response(itrial))]);
-            Eyelink('Message', 'End of the trial');
-        end
     end
     actual_duration = GetSecs() - start;
     save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
     filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
     writetable(T, filename);
-    write_event_files(subjName,run_number, T);
+    write_event_files(subjName,run_number, ses_number, T);
     ShowCursor;
     Screen('CloseAll')
-    
-    %% close eyelink
-    if with_Eyelink
-        Eyelink('Message', 'End of the Block');
-        Eyelink('Stoprecording')
-        Eyelink('CloseFile');
-        try
-            fprintf('Receiving data file ''%s''\n', edfFile );
-            status=Eyelink('ReceiveFile',edfFile);
-            if status > 0
-                fprintf('ReceiveFile status %d\n', status);
-            end
-            if exist(edfFile, 'file')
-                fprintf('Data file ''%s'' can be found in ''%s''\n', edfFile, pwd );
-            end
-        catch
-            fprintf('Problem receiving data file ''%s''\n', edfFile );
-        end
-        Eyelink('ShutDown');
-        
-        try
-            movefile(edfFile, edfout);
-            move_error = 'No';
-        catch
-            move_error = 'Yes';
-        end
-        fprintf(['Move EDF Error? ',move_error,'\n'])
-    end
     
     %% Print participant performance
     false_alarms = sum(T.response(T.condition == 1) == 1);
@@ -351,7 +322,7 @@ catch e
     save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
     filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
     writetable(T, filename);
-    write_event_files(subjName,run_number, T);
+    write_event_files(subjName,run_number, ses_number, T);
     ShowCursor;
     Screen('CloseAll')
     

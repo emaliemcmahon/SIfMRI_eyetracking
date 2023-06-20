@@ -73,7 +73,7 @@ for iTrial = 1 : nTrials
         Eyelink('Message', ['TRIALID ', num2str(iTrial)]);
         Eyelink('Message', ['!V TARGET_POS TARG1 (',num2str(xo),', ',num2str(yo),') 1 1']);
         Eyelink('Message', 'Begining of the trial');
-    end;
+    end
     
     if leftRight(iTrial) == 1
         trialDirection = 'Left';
@@ -190,7 +190,7 @@ for iTrial = 1 : nTrials
         Eyelink('Message',['TRIAL_RESULT ',num2str(accuracy(iTrial))]);
         Eyelink('Message',['TRIAL_RESULT ',num2str(RT(iTrial))]);
         Eyelink('Message', 'End of the trial');
-    end;
+    end
 end
 startOfTrial(iTrial + 1) = GetSecs;
 
@@ -226,7 +226,7 @@ if with_Eyelink
     Eyelink('ShutDown');
     
     try
-        movefile([edfFile,'.edf'],path2edf);
+        movefile([edfFile],path2edf);
         move_error = 'No'; 
     catch
         move_error = 'Yes';

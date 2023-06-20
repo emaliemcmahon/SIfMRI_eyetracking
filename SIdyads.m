@@ -66,12 +66,12 @@ sound = 0;
 blocking = 1;
 stimulus_length = 3;
 TR = .5;
-iti_length = TR;
-n_response = 5;
+iti_length = TR*1.5;
+n_response = 25;
 n_real = size(video_list, 1);
 n_extra_TRs = 0;
 n_extra_TR_trials = 0;
-ending_wait_time = .5;
+ending_wait_time = 1;
 start_wait_time = TR;
 
 expected_duration = ((n_response + n_real) * (stimulus_length + iti_length)) + (n_extra_TRs * n_extra_TR_trials * TR) + ending_wait_time + start_wait_time;
@@ -135,7 +135,7 @@ priorityLevel=MaxPriority(win);
 Priority(priorityLevel);
 
 %% Task instructions and start with the trigger
-instructions='Watch the people in each video. If there are more than 2 people, hit the button.';
+instructions='Watch the people in each video. If there are more than 2 people, press any button. Press any button to begin.';
 DrawFormattedText2(instructions,'win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
 Screen('Flip', win);
 
@@ -183,24 +183,14 @@ end
 
 %% WAIT FOR TRIGGER TO START
 still_loading = 1;
-wait_to_start = GetSecs();
-if trigger
-    while 1
-        if KbCheck
-            break; 
-        end
-        
-        if still_loading
-            movie(1) = Screen('OpenMovie', win, T.movie_path{1}, async, preloadsecs);
-            if movie(1) > 0; still_loading = 0; end
-        end
+while 1
+    if KbCheck
+        break; 
     end
-else
-    while (GetSecs-wait_to_start<0.5)
-        if still_loading
-            movie(1) = Screen('OpenMovie', win, T.movie_path{1}, async, preloadsecs);
-            if movie(1) > 0; still_loading = 0; end
-        end
+
+    if still_loading
+        movie(1) = Screen('OpenMovie', win, T.movie_path{1}, async, preloadsecs);
+        if movie(1) > 0; still_loading = 0; end
     end
 end
 
@@ -299,6 +289,11 @@ try
             Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial) == T.response(itrial))]);
             Eyelink('Message', 'End of the trial');
         end
+        
+        if mod(itrial, 25)
+            DrawFormattedText2('Take a brief break./n Press any button when ready to continue.','win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
+            Screen('Flip', win);
+        end 
     end
     actual_duration = GetSecs() - start;
     save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))

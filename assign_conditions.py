@@ -7,6 +7,7 @@ from pathlib import Path
 import csv
 import pandas as pd
 
+
 def load_video_names(file):
     with open(file, newline='') as csvfile:
         data = list(csv.reader(csvfile))
@@ -24,7 +25,9 @@ def mk_output_paths(SID, toppath):
 
 def shuffle_trials(trials, n_blocks):
     trials_shuffle = trials.copy()
-    np.random.seed(int(time.time()))
+    seed = int((time.time() % 1) * 10000)
+    print(seed)
+    np.random.seed(seed)
     np.random.shuffle(trials_shuffle)
     return trials_shuffle.reshape((n_blocks, -1))
 
@@ -32,6 +35,7 @@ def shuffle_trials(trials, n_blocks):
 def save_data(array, filename):
     df = pd.DataFrame(array)
     df.to_csv(filename, index=False, header=False)
+
 
 def get_past_runs(SID=77, n_repeats=6, n_blocks=5):
     toppath = os.path.join('data', f'subj{str(SID).zfill(3)}')

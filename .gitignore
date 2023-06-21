@@ -1,2 +1,4 @@
 videos/
-data/
+data/*/edfs/
+data/*/matfiles/
+data/*/timingsfiles/

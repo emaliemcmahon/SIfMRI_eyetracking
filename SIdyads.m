@@ -75,7 +75,7 @@ ending_wait_time = 1;
 start_wait_time = TR;
 
 expected_duration = ((n_response + n_real) * (stimulus_length + iti_length)) + (n_extra_TRs * n_extra_TR_trials * TR) + ending_wait_time + start_wait_time;
-fprintf('Expected duration: %g \n\n', expected_duration);
+fprintf('Expected duration: %g min \n\n', expected_duration / 60);
 sca;
 
 
@@ -102,8 +102,7 @@ n_trials = size(T, 1);
 
 %Get the name of the first movie
 for itrial = 1:n_trials
-    video_name = split(T.video_name{itrial},'.');
-    video_name = [video_name{1},'.mov'];
+    video_name = T.video_name{itrial};
     if T.condition(itrial) == 1
         T.movie_path{itrial} = fullfile(curr, 'videos','dyad_videos_3000ms',video_name);
     elseif T.condition(itrial) == 0
@@ -338,7 +337,7 @@ try
     s=sprintf('%g hits out of %g crowd videos. %g false alarms out of %g dyad videos. Overall accuracy is %0.2f.', hits, n_response, false_alarms, n_real, total_accuracy);
     fprintf('\n\n\n%s\n',WrapString(s));
     
-    s=sprintf('Expected length was %g s. Actual length was %g s.', expected_duration, actual_duration);
+    s=sprintf('Expected length was %g min. Actual length was %g min. Difference was %g min', (expected_duration/60), (actual_duration/60), ((actual_duraction - expected_duration)/60));
     fprintf('\n%s\n\n ',WrapString(s));
 catch e
     fprintf('\nError: %s\n',e.message);

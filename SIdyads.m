@@ -22,6 +22,9 @@ matout = fullfile(topout, 'matfiles');
 timingout = fullfile(topout, 'timingfiles');
 runfiles = fullfile(topout,'runfiles');
 edfout = fullfile(topout, 'edfs');
+if ~exist(bidsoutpath); mkdir(matout); end 
+if ~exist(bidsoutpath); mkdir(timingout); end 
+if ~exist(bidsoutpath); mkdir(edfout); end 
 
 if ~exist(topout, 'dir')
     s=sprintf('Run files do not exist of subject %g. Make run files before continuing.', subjName);

@@ -6,13 +6,13 @@ function run_number = SIdyads(subjName, run_number, with_Eyelink)
 % design is either 1 or 2 and selects the order of video presentation.
 % trigger is a binaray value whether the code should wait for a trigger
 % from the scanner
-% Written by Emalie McMahon Feb 26, 2020
+% Written by Emalie McMahon June 22, 2023
 
 
 if nargin < 1
     subjName = 77;
     run_number = [];
-    with_Eyelink = 0;
+    with_Eyelink = 1;
 end
 
 % make output directories
@@ -75,7 +75,7 @@ ending_wait_time = 1;
 start_wait_time = TR;
 
 expected_duration = ((n_response + n_real) * (stimulus_length + iti_length)) + (n_extra_TRs * n_extra_TR_trials * TR) + ending_wait_time + start_wait_time;
-fprintf('Expected duration: %g \n\n', expected_duration);
+fprintf('Expected duration: %g min \n\n', expected_duration / 60);
 sca;
 
 
@@ -102,8 +102,7 @@ n_trials = size(T, 1);
 
 %Get the name of the first movie
 for itrial = 1:n_trials
-    video_name = split(T.video_name{itrial},'.');
-    video_name = [video_name{1},'.mov'];
+    video_name = T.video_name{itrial};
     if T.condition(itrial) == 1
         T.movie_path{itrial} = fullfile(curr, 'videos','dyad_videos_3000ms',video_name);
     elseif T.condition(itrial) == 0
@@ -119,8 +118,8 @@ commandwindow;
 Screen('Preference','SkipSyncTests',1);
 
 % Uncomment for debugging with transparent screen
-AssertOpenGL;
-PsychDebugWindowConfiguration;
+% AssertOpenGL;
+% PsychDebugWindowConfiguration;
 
 %Suppress frogs
 Screen('Preference','VisualDebugLevel', 0);
@@ -134,11 +133,6 @@ dispSize = [x0-500 y0-500 x0+500 y0+500];
 priorityLevel=MaxPriority(win);
 Priority(priorityLevel);
 
-%% Task instructions and start with the trigger
-instructions='Watch the people in each video. If there are more than 2 people, press any button. Press any button to begin.';
-DrawFormattedText2(instructions,'win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
-Screen('Flip', win);
-
 %% Init eyelink
 
 if with_Eyelink
@@ -146,17 +140,20 @@ if with_Eyelink
         return;
     end
     
-    edfFile=fullfile(edfout,['run', sprintf('%03d', run_number) '_',curr_date,'.edf']);
-    el=EyelinkInitDefaults(w);%window is the window you have opened with screen function
+    [~,vs] = Eyelink('GetTrackerVersion');
+    fprintf('Running experiment on a ''%s'' tracker.\n', vs );
+    
+    edfFile=['run', sprintf('%03d', run_number)]; %fullfile(edfout,['run', sprintf('%03d', run_number)]);
+    el=EyelinkInitDefaults(win);%window is the window you have opened with screen function
     
     % open file to record data to
     Eyelink('Openfile', edfFile);
     
     % this line will perform the calibration
+    Eyelink('command', 'calibration_type = HV9');
     EyelinkDoTrackerSetup(el);
     
     % set up configurations.
-    Eyelink('command', 'calibration_type = HV5');
     Eyelink('command', 'recording_parse_type = GAZE');
     Eyelink('command', 'saccade_acceleration_threshold = 8000');
     Eyelink('command', 'saccade_velocity_threshold = 30');
@@ -176,18 +173,23 @@ if with_Eyelink
     % record a few samples before we actually start displaying
     WaitSecs(0.1);
     
-    eyeLinkCheck(w,x0,y0); %Additional Eyelink Validation that saves the
+%     eyeLinkCheck(win,x0,y0); %Additional Eyelink Validation that saves the
     %position at the beginning of the block data to help diagnose systematic
     %errors.
 end
+
+%% Task instructions and start with the trigger
+instructions='Watch the people in each video. If there are more than 2 people, press any button. Press any button to begin.';
+DrawFormattedText2(instructions,'win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
+Screen('Flip', win);
 
 %% WAIT FOR TRIGGER TO START
 still_loading = 1;
 while 1
     if KbCheck
-        break; 
+        break;
     end
-
+    
     if still_loading
         movie(1) = Screen('OpenMovie', win, T.movie_path{1}, async, preloadsecs);
         if movie(1) > 0; still_loading = 0; end
@@ -197,7 +199,7 @@ end
 
 %% Experiment loop
 % experiment start time
-try
+% try
     start = GetSecs();
     Screen('Flip', win);
     
@@ -223,7 +225,7 @@ try
         if with_Eyelink %inside the trial function
             % these messages will be recorded in the output file determining the begining of the trial
             Eyelink('Message', 'TRIAL_VAR_LABELS video condition');%change VAR1 and VAR2 to your desired variables
-            Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}, T.condition{itrial}]);
+            Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}, T.condition(itrial)]);
             Eyelink('Message', ['TRIALID ', num2str(itrial)]);
             Eyelink('Message', 'Begining of the trial');
         end
@@ -281,7 +283,6 @@ try
                 end
             end
         end
-        GetSecs - trial_start
         
         if with_Eyelink
             Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial))]);
@@ -290,11 +291,19 @@ try
             Eyelink('Message', 'End of the trial');
         end
         
-        if mod(itrial, 25)
+        if (mod(itrial, 55) == 0) && (itrial ~= n_trials)
             DrawFormattedText2('Take a brief break./n Press any button when ready to continue.','win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
             Screen('Flip', win);
-        end 
+            fprintf('Break in experiment'); 
+            while 1
+                if KbCheck
+                    break;
+                end
+            end
+        end
     end
+    
+    %% Save data
     actual_duration = GetSecs() - start;
     save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
     filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
@@ -303,7 +312,7 @@ try
     ShowCursor;
     Screen('CloseAll')
     
-    %% close eyelink
+    %% save eyelink and close
     if with_Eyelink
         Eyelink('Message', 'End of the Block');
         Eyelink('Stoprecording')
@@ -323,7 +332,7 @@ try
         Eyelink('ShutDown');
         
         try
-            movefile(edfFile, edfout);
+            movefile([edfFile,'.edf'], fullfile(edfout, [edfFile, '_', curr_date, '.edf']));
             move_error = 'No';
         catch
             move_error = 'Yes';
@@ -338,27 +347,26 @@ try
     s=sprintf('%g hits out of %g crowd videos. %g false alarms out of %g dyad videos. Overall accuracy is %0.2f.', hits, n_response, false_alarms, n_real, total_accuracy);
     fprintf('\n\n\n%s\n',WrapString(s));
     
-    s=sprintf('Expected length was %g s. Actual length was %g s.', expected_duration, actual_duration);
+    s=sprintf('Expected length was %g min. Actual length was %g min. Difference was %g min', (expected_duration/60), (actual_duration/60), ((actual_duration - expected_duration)/60));
     fprintf('\n%s\n\n ',WrapString(s));
-catch e
-    fprintf('\nError: %s\n',e.message);
-    actual_duration = GetSecs() - start;
-    save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
-    filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
-    writetable(T, filename);
-    write_event_files(subjName,run_number, T);
-    ShowCursor;
-    Screen('CloseAll')
-    
-    %% Print participant performance
-    false_alarms = sum(T.response(T.condition == 1) == 1);
-    hits = sum(T.response(T.condition == 0) == 1);
-    total_accuracy = mean(T.condition ~= T.response);
-    s=sprintf('%g hits out of %g crowd videos. %g false alarms out of %g dyad videos. Overall accuracy is %0.2f.', hits, n_response, false_alarms, n_real, total_accuracy);
-    fprintf('\n\n\n%s\n',WrapString(s));
-    
-    s=sprintf('Expected length was %g s. Actual length was %g s.', expected_duration, actual_duration);
-    fprintf('\n%s\n\n ',WrapString(s));
-end
-end
+% catch e
+%     fprintf('\nError: %s\n',e.message);
+%     actual_duration = GetSecs() - start;
+%     save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
+%     filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
+%     writetable(T, filename);
+%     write_event_files(subjName,run_number, T);
+%     ShowCursor;
+%     Screen('CloseAll')
+%     
+%     %% Print participant performance
+%     false_alarms = sum(T.response(T.condition == 1) == 1);
+%     hits = sum(T.response(T.condition == 0) == 1);
+%     total_accuracy = mean(T.condition ~= T.response);
+%     s=sprintf('%g hits out of %g crowd videos. %g false alarms out of %g dyad videos. Overall accuracy is %0.2f.', hits, n_response, false_alarms, n_real, total_accuracy);
+%     fprintf('\n\n\n%s\n',WrapString(s));
+%     
+%     s=sprintf('Expected length was %g s. Actual length was %g s.', expected_duration, actual_duration);
+%     fprintf('\n%s\n\n ',WrapString(s));
+% end
 

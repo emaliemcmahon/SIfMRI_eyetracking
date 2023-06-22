@@ -12,7 +12,7 @@ function run_number = SIdyads(subjName, run_number, with_Eyelink)
 if nargin < 1
     subjName = 77;
     run_number = [];
-    with_Eyelink = 1;
+    with_Eyelink = 0;
 end
 
 % make output directories

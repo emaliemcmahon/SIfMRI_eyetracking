@@ -1,6 +1,6 @@
 videos/
 data/*/edfs/*.edf
 data/*/matfiles/*.mat
-data/*/timingsfiles/*.csv
+data/*/timingfiles/*.csv
 data/*/bids/*.tsv
 data/*/bids/*.json

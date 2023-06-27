@@ -298,7 +298,6 @@ actual_duration = GetSecs() - start;
 save(fullfile(matout,['run', sprintf('%03d', run_number) '_',curr_date,'.mat']))
 filename = fullfile(timingout,['run', sprintf('%03d', run_number), '_',curr_date,'.csv']);
 writetable(T, filename);
-write_event_files(subjName,run_number, T);
 ShowCursor;
 Screen('CloseAll')
 
@@ -334,7 +333,7 @@ end
 false_alarms = sum(T.response(T.condition == 1) == 1);
 hits = sum(T.response(T.condition == 0) == 1);
 total_accuracy = mean(T.condition ~= T.response);
-s=sprintf('%g hits out of %g crowd videos. %g false alarms out of %g dyad videos. Overall accuracy is %0.2f.', hits, n_response, false_alarms, n_real, total_accuracy);
+s=sprintf('%d hits \n%d false alarms\n Overall accuracy was %0.2f.', hits, false_alarms, total_accuracy);
 fprintf('\n\n\n%s\n',WrapString(s));
 
 s=sprintf('Expected length was %g min. Actual length was %g min. Difference was %g min', (expected_duration/60), (actual_duration/60), ((actual_duration - expected_duration)/60));

@@ -65,11 +65,12 @@ rate = 1;
 sound = 0;
 blocking = 1;
 stimulus_length = 3;
-TR = .5;
+TR = .75;
 iti_length = TR;
 ending_wait_time = 1;
 start_wait_time = TR;
-n_trials = height(T);
+% n_trials = height(T);
+n_trials = 2;
 
 expected_duration = (height(T) * (stimulus_length + iti_length)) + ending_wait_time + start_wait_time;
 fprintf('Expected duration: %g min \n\n', expected_duration / 60);
@@ -209,7 +210,7 @@ for itrial = 1:n_trials
         Eyelink('Message', 'TRIAL_VAR_LABELS video condition');%change VAR1 and VAR2 to your desired variables
         Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}, T.condition(itrial)]);
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
-        Eyelink('Message', 'Begining of the trial');
+        Eyelink('Message', 'TRIAL_START');
     end
     
     while 1
@@ -218,8 +219,8 @@ for itrial = 1:n_trials
         end
         
         if with_Eyelink
-            Eyelink('Message','Rest off');
-            Eyelink('Message','Stimulus start');
+            Eyelink('Message','REST_OFF');
+            Eyelink('Message','STIMULUS_START');
         end
         
         tex = Screen('GetMovieImage', win, movie(itrial), blocking);
@@ -248,8 +249,8 @@ for itrial = 1:n_trials
     Screen('CloseMovie', movie(itrial));
     
     if with_Eyelink
-        Eyelink('Message','Stimulus Off');
-        Eyelink('Message','Rest Start');
+        Eyelink('Message','STIMULUS_OFF');
+        Eyelink('Message','REST_START');
     end
     
     while (GetSecs<iti_end)
@@ -270,19 +271,21 @@ for itrial = 1:n_trials
         Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial))]);
         Eyelink('Message',['TRIAL_RESULT ',num2str(T.response(itrial))]);
         Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial) == T.response(itrial))]);
-        Eyelink('Message', 'End of the trial');
+        Eyelink('Message', 'TRIAL_END');
     end
     
-    if (itrial ~= height(T)) && (T.block(itrial) ~= T.block(itrial + 1))
-        DrawFormattedText2('Take a short break./n Press any button when ready to continue.','win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
-        Screen('Flip', win);
-        fprintf('Break in experiment');
-        while 1
-            if KbCheck
-                break;
+    if itrial ~= height(T)
+        if T.block(itrial) ~= T.block(itrial + 1)
+            DrawFormattedText2('Take a short break./n Press any button when ready to continue.','win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);
+            Screen('Flip', win);
+            fprintf('Break in experiment');
+            while 1
+                if KbCheck
+                    break;
+                end
             end
         end
-    else
+    else %itrial == height(T)
         instructions = 'You may sit back.\nLonger break is beginning.\nThis window will close.\n';
         
         DrawFormattedText2(instructions,'win',win,'sx','center','sy','center','xalign','center','yalign', 'center','baseColor',[255, 255, 255]);

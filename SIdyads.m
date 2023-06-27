@@ -8,14 +8,15 @@ function run_number = SIdyads(subjName, run_number, with_Eyelink)
 % from the scanner
 % Written by Emalie McMahon June 22, 2023
 
-
+debug = 0;
 if nargin < 1
     subjName = 77;
     run_number = 1;
-    with_Eyelink = 0;
+    with_Eyelink = 1;
+    debug = 1; 
 end
 
-% make output directories
+% make output directories 
 curr = pwd;
 topout = fullfile(curr, 'data', ['subj',sprintf('%03d', subjName)]);
 matout = fullfile(topout, 'matfiles');
@@ -69,7 +70,11 @@ TR = .75;
 iti_length = TR;
 ending_wait_time = 1;
 start_wait_time = TR;
-n_trials = height(T);
+if debug
+    n_trials = 5; 
+else
+    n_trials = height(T);
+end 
 
 expected_duration = (height(T) * (stimulus_length + iti_length)) + ending_wait_time + start_wait_time;
 fprintf('Expected duration: %g min \n\n', expected_duration / 60);

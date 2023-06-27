@@ -4,3 +4,5 @@ data/*/matfiles/*.mat
 data/*/timingfiles/*.csv
 data/*/bids/*.tsv
 data/*/bids/*.json
+processed_data/
+data/*/asc/

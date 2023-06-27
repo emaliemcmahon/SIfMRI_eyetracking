@@ -71,8 +71,7 @@ ending_wait_time = 1;
 start_wait_time = TR;
 n_trials = height(T);
 
-expected_duration = (height(T) * (stimulus_length + iti_length)) + ending_wait_time +
-start_wait_time;
+expected_duration = (height(T) * (stimulus_length + iti_length)) + ending_wait_time + start_wait_time;
 fprintf('Expected duration: %g min \n\n', expected_duration / 60);
 sca;
 
@@ -102,8 +101,8 @@ commandwindow;
 Screen('Preference','SkipSyncTests',1);
 
 % Uncomment for debugging with transparent screen
-AssertOpenGL;
-PsychDebugWindowConfiguration;
+% AssertOpenGL;
+% PsychDebugWindowConfiguration;
 
 %Suppress frogs
 Screen('Preference','VisualDebugLevel', 0);

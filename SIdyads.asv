@@ -12,7 +12,7 @@ function run_number = SIdyads(subjName, run_number, with_Eyelink)
 if nargin < 1
     subjName = 77;
     run_number = 1;
-    with_Eyelink = 1;
+    with_Eyelink = 0;
 end
 
 % make output directories
@@ -69,8 +69,7 @@ TR = .75;
 iti_length = TR;
 ending_wait_time = 1;
 start_wait_time = TR;
-% n_trials = height(T);
-n_trials = 5;
+n_trials = height(T);
 
 expected_duration = (height(T) * (stimulus_length + iti_length)) + ending_wait_time + start_wait_time;
 fprintf('Expected duration: %g min \n\n', expected_duration / 60);
@@ -207,21 +206,16 @@ for itrial = 1:n_trials
     
     if with_Eyelink %inside the trial function
         % these messages will be recorded in the output file determining the begining of the trial
-        Eyelink('Message', 'TRIAL_VAR_LABELS video');%change VAR1 and VAR2 to your desired variables
-        Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}]);
+        Eyelink('Message', ['TRIAL_VAR_DATA ', T.movie_path{itrial}]);
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
         Eyelink('Message', 'TRIAL_START');
+        Eyelink('Message','STIMULUS_START');
+        Eyelink('Message', 'SYNCTIME');
     end
     
     while 1
         if frame_counter == 90 || GetSecs > (trial_end-(1/60))
             break;
-        end
-        
-        if with_Eyelink
-            Eyelink('Message','REST_OFF');
-            Eyelink('Message','STIMULUS_START');
-            Eyelink('Message', 'SYNCTIME');
         end
         
         tex = Screen('GetMovieImage', win, movie(itrial), blocking);
@@ -335,9 +329,8 @@ hits = sum(T.response(T.condition == 0) == 1);
 total_accuracy = mean(T.condition ~= T.response);
 s=sprintf('%d hits \n%d false alarms\nOverall accuracy was %0.2f.', hits, false_alarms, total_accuracy);
 fprintf('\n\n\n%s\n',WrapString(s));
-s=sprintf('Experiment duration %d', hits, false_alarms, total_accuracy);
+s=sprintf('Experiment duration %0.1f s', actual_duration);
 fprintf('\n\n\n%s\n',WrapString(s));
-fprintf('
 % catch e
 %     fprintf('\nError: %s\n',e.message);
 %     actual_duration = GetSecs() - start;

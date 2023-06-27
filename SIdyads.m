@@ -206,21 +206,15 @@ for itrial = 1:n_trials
     
     if with_Eyelink %inside the trial function
         % these messages will be recorded in the output file determining the begining of the trial
-        Eyelink('Message', 'TRIAL_VAR_LABELS video');%change VAR1 and VAR2 to your desired variables
-        Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}]);
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
-        Eyelink('Message', 'TRIAL_START');
+        Eyelink('Message', ['TRIAL_VAR_DATA ', T.movie_path{itrial}]);
+        Eyelink('Message','STIMULUS_START');
+        Eyelink('Message', 'SYNCTIME');
     end
     
     while 1
         if frame_counter == 90 || GetSecs > (trial_end-(1/60))
             break;
-        end
-        
-        if with_Eyelink
-            Eyelink('Message','REST_OFF');
-            Eyelink('Message','STIMULUS_START');
-            Eyelink('Message', 'SYNCTIME');
         end
         
         tex = Screen('GetMovieImage', win, movie(itrial), blocking);
@@ -248,12 +242,13 @@ for itrial = 1:n_trials
     T.duration(itrial) = real_trial_end - trial_start;
     Screen('CloseMovie', movie(itrial));
     
-    if with_Eyelink
-        Eyelink('Message','STIMULUS_OFF');
-        Eyelink('Message','REST_START');
-    end
-    
+    message_sent = 0; 
     while (GetSecs<iti_end)
+        if with_Eyelink && ~message_sent
+            Eyelink('Message','STIMULUS_OFF');
+            Eyelink('Message','REST_START');
+            message_sent = 1;
+        end
         if still_loading && itrial ~= n_trials
             movie(itrial+1) = Screen('OpenMovie', win, T.movie_path{itrial+1}, async, preloadsecs);
             if movie(itrial+1) > 0; still_loading = 0; end
@@ -265,10 +260,6 @@ for itrial = 1:n_trials
                 T.response(itrial) = 1;
             end
         end
-    end
-    
-    if with_Eyelink
-        Eyelink('Message', 'TRIAL_END');
     end
     
     if itrial ~= height(T)

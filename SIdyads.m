@@ -207,8 +207,8 @@ for itrial = 1:n_trials
     
     if with_Eyelink %inside the trial function
         % these messages will be recorded in the output file determining the begining of the trial
-        Eyelink('Message', 'TRIAL_VAR_LABELS video condition');%change VAR1 and VAR2 to your desired variables
-        Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}, T.condition(itrial)]);
+        Eyelink('Message', 'TRIAL_VAR_LABELS video');%change VAR1 and VAR2 to your desired variables
+        Eyelink('Message', ['!V TRIAL_VAR_DATA ', T.movie_path{itrial}]);
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
         Eyelink('Message', 'TRIAL_START');
     end
@@ -221,6 +221,7 @@ for itrial = 1:n_trials
         if with_Eyelink
             Eyelink('Message','REST_OFF');
             Eyelink('Message','STIMULUS_START');
+            Eyelink('Message', 'SYNCTIME');
         end
         
         tex = Screen('GetMovieImage', win, movie(itrial), blocking);
@@ -268,9 +269,6 @@ for itrial = 1:n_trials
     end
     
     if with_Eyelink
-        Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial))]);
-        Eyelink('Message',['TRIAL_RESULT ',num2str(T.response(itrial))]);
-        Eyelink('Message',['TRIAL_RESULT ',num2str(T.condition(itrial) == T.response(itrial))]);
         Eyelink('Message', 'TRIAL_END');
     end
     
@@ -306,7 +304,7 @@ Screen('CloseAll')
 
 %% save eyelink and close
 if with_Eyelink
-    Eyelink('Message', 'End of the Block');
+    Eyelink('Message', 'RUN_END');
     Eyelink('Stoprecording')
     Eyelink('CloseFile');
     try

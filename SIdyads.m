@@ -214,7 +214,6 @@ for itrial = 1:n_trials
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
         Eyelink('Message', ['TRIAL_VAR_DATA ', T.movie_path{itrial}]);
         Eyelink('Message','STIMULUS_START');
-        Eyelink('Message', 'SYNCTIME');
     end
     
     while 1

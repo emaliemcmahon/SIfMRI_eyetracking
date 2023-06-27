@@ -45,7 +45,10 @@ for run in range(3):
         events=events[experiment_start_index+1:]
 
         df_ev=pd.DataFrame([ev.split() for ev in events])
-        print(df_ev)
+        df_ev = df_ev[[1, 2, 3]]
+        df_ev.columns = ['time', 'event', 'data']
+        # df_ev.loc[df_ev.data == 'None']
+        print(df_ev.loc[df_ev.data.isna()])
 
 #         df_conditions = df_ev[df_ev[3] == 'TRIAL_VAR_DATA']
 #         df_conditions = df_conditions[[1, 4]]

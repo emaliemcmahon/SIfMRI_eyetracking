@@ -212,8 +212,9 @@ for itrial = 1:n_trials
     if with_Eyelink %inside the trial function
         % these messages will be recorded in the output file determining the begining of the trial
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
-        Eyelink('Message', ['TRIAL_VAR_DATA ', T.movie_path{itrial}]);
-        Eyelink('Message','STIMULUS_START');
+        Eyelink('Message', ['VIDEO_NAME ', T.video_name{itrial}]);
+        Eyelink('Message', ['CONDITION ', T.condition{itrial}]);
+        Eyelink('Message', 'STIMULUS_START');
     end
     
     while 1
@@ -250,7 +251,6 @@ for itrial = 1:n_trials
     while (GetSecs<iti_end)
         if with_Eyelink && ~message_sent
             Eyelink('Message','STIMULUS_OFF');
-            Eyelink('Message','REST_START');
             message_sent = 1;
         end
         if still_loading && itrial ~= n_trials
@@ -297,7 +297,6 @@ Screen('CloseAll')
 
 %% save eyelink and close
 if with_Eyelink
-    Eyelink('Message', 'RUN_END');
     Eyelink('Stoprecording')
     Eyelink('CloseFile');
     try

@@ -212,8 +212,8 @@ for itrial = 1:n_trials
     if with_Eyelink %inside the trial function
         % these messages will be recorded in the output file determining the begining of the trial
         Eyelink('Message', ['TRIALID ', num2str(itrial)]);
-        Eyelink('Message', ['VIDEO_NAME ', T.video_name{itrial}]);
-        Eyelink('Message', ['CONDITION ', T.condition{itrial}]);
+        Eyelink('Message', ['TRIAL_VAR_DATA ', T.video_name{itrial}]);
+%         Eyelink('Message', ['CONDITION ', T.condition{itrial}]);
         Eyelink('Message', 'STIMULUS_START');
     end
     

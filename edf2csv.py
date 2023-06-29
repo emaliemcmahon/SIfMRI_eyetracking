@@ -5,14 +5,15 @@ import numpy as np
 import os
 from glob import glob
 from pathlib import Path
+import shutil
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('mode.chained_assignment',  None)
 
-subj = 'subj002'
+subj = 'subj003'
 Path(f'data/{subj}/asc').mkdir(exist_ok=True, parents=True)
 out_data = []
-for run in range(1,2):
+for run in range(2):
     run_str = str(run+1).zfill(3)
     edf_pattern = f'data/{subj}/edfs/run{run_str}*.edf'
     print(edf_pattern)
@@ -58,8 +59,13 @@ for run in range(1,2):
         df_ev_pivot = pd.concat(df_ev_pivot, axis=1)
         df_ev_pivot['TRIALID'] = df_ev_pivot['TRIALID'].astype('int')
         df_ev_pivot[['STIMULUS_START', 'STIMULUS_OFF']] = df_ev_pivot[['STIMULUS_START', 'STIMULUS_OFF']].astype('int')
+
+        print('loading runfile')
+        df_runfile = pd.read_csv(f'data/{subj}/runfiles/run{run_str}.csv')
+        df_ev_pivot = df_ev_pivot.join(df_runfile)
         print('\n\nreorganized events')
         print(df_ev_pivot.head())
+        df_ev_pivot.to_csv('testing_code.csv')
 
         for i, row in df_ev_pivot.iterrows():
             onset = row.STIMULUS_START
@@ -67,7 +73,9 @@ for run in range(1,2):
             cur = df_samples[(df_samples.time > onset) & (df_samples.time <= offset)]
             cur['run'] = run 
             cur['trial'] = row.TRIALID
-            cur['video'] = row.TRIAL_VAR_DATA
+            cur['video_name'] = row.video_name
+            cur['block'] = row.block
+            cur['condition'] = row.condition
             out_data.append(cur)
 df = pd.concat(out_data)
 df.reset_index(drop=True, inplace=True)
@@ -86,3 +94,4 @@ print(df.dtypes)
 print('\n\nfinal df') 
 print(df.head(10))
 df.to_csv(f'processed_data/{subj}.csv', index=False)
+shutil.copy(f'processed_data/{subj}.csv', f'../SIfMRI_analysis/data/raw/eyetracking/{subj}.csv')

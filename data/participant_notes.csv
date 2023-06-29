@@ -1,0 +1,10 @@
+﻿sid,date,age,gender,race,experiment notes,calibration notes
+subj001,22-Jun-23,,,,full experiment with 500 ms isi and 6 repeats,messy calibration and pooly focused camera
+subj002,28-Jun-23,,,,,great calibration
+subj003,29-Jun-23,,,,,difficult calibration so switched to HV5 calibration 
+subj004,,,,,,
+subj005,,,,,,
+subj006,,,,,,
+subj007,,,,,,
+subj008,,,,,,
+subj009,,,,,,

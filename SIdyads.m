@@ -12,7 +12,7 @@ debug = 0;
 if nargin < 1
     subjName = 77;
     run_number = 1;
-    with_Eyelink = 1;
+    with_Eyelink = 0;
     debug = 1; 
 end
 

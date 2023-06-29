@@ -71,7 +71,7 @@ def get_past_runs(SID=77, n_runs=6, n_repeats=4, set='test'):
 
 def getArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sid', type=int, default=77)
+    parser.add_argument('--sid', '-s', type=int, default=77)
     parser.add_argument('--n_runs', type=int, default=3)
     parser.add_argument('--n_repeats', type=int, default=4)
     parser.add_argument('--set', type=str, default='test')

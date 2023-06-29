@@ -1,5 +1,4 @@
 #
-from shlex import join
 import pandas as pd
 import numpy as np
 import os
@@ -12,7 +11,7 @@ pd.set_option('mode.chained_assignment',  None)
 subj = 'subj002'
 Path(f'data/{subj}/asc').mkdir(exist_ok=True, parents=True)
 out_data = []
-for run in range(1,2):
+for run in range(1,3):
     run_str = str(run+1).zfill(3)
     edf_pattern = f'data/{subj}/edfs/run{run_str}*.edf'
     print(edf_pattern)
@@ -44,45 +43,47 @@ for run in range(1,2):
         events=events[experiment_start_index:]
 
         df_ev=pd.DataFrame([ev.split() for ev in events])
+        print(df_ev.head())
         df_ev = df_ev[[1, 2, 3]]
         df_ev.columns = ['time', 'event', 'data']
         # df_ev.loc[df_ev.data == 'None']
+        df_ev = df_ev[df_ev.event.isin(['REST_START', 'RUN_END', 'SYNCTIME']) == False]
         df_ev.loc[df_ev.data.isna(), 'data'] = df_ev.loc[df_ev.data.isna(), 'time'].copy()
         df_ev.drop(columns=['time'], inplace=True)
-        df_ev_pivot = []
-        for i, j in df_ev.groupby('event'):
-            j.drop(columns='event', inplace=True)
-            j.rename(columns={'data': i}, inplace=True)
-            j.reset_index(drop=True, inplace=True)
-            df_ev_pivot.append(j)
-        df_ev_pivot = pd.concat(df_ev_pivot, axis=1)
-        df_ev_pivot['TRIALID'] = df_ev_pivot['TRIALID'].astype('int')
-        df_ev_pivot[['STIMULUS_START', 'STIMULUS_OFF']] = df_ev_pivot[['STIMULUS_START', 'STIMULUS_OFF']].astype('int')
-        print('\n\nreorganized events')
-        print(df_ev_pivot.head())
+        arr = df_ev.data.to_numpy().reshape((-1, 4))
+        df_ev_pivot = pd.DataFrame(arr)
+        df_ev_pivot.columns = ['trial', 'video', 'start_time', 'end_time']
+        df_ev_pivot['trial'] = df_ev_pivot['trial'].astype('int')
+        df_ev_pivot['start_time'] = df_ev_pivot['start_time'].astype('int')
+        df_ev_pivot['end_time'] = df_ev_pivot['end_time'].astype('int')
+        print(df_ev_pivot)
 
         for i, row in df_ev_pivot.iterrows():
-            onset = row.STIMULUS_START
+            trial = row.trial
+            video = row.video.split('\\')[-1].replace('\x01', '')
+            onset = row.start_time
             offset = onset + 3000
             cur = df_samples[(df_samples.time > onset) & (df_samples.time <= offset)]
-            cur['run'] = run 
-            cur['trial'] = row.TRIALID
-            cur['video'] = row.TRIAL_VAR_DATA
+            cur['trial'] = trial
+            cur['video'] = video
+            cur['run'] = run
             out_data.append(cur)
 df = pd.concat(out_data)
 df.reset_index(drop=True, inplace=True)
 inds = np.isclose(df.p, 0)
 df.loc[inds, ['x', 'y']] = '-7777'
-df[['x', 'y']] = df[['x', 'y']].astype('float')
+df.x = df.x.astype('float')
+df.y = df.y.astype('float')
 df.time = df.time.astype('int')
 df.loc[inds, ['x', 'y', 'p']] = np.nan
+missing_vals = df.loc[inds]
 
 df.sort_values(by='time', inplace=True)
-df['trial_time_index'] = df.groupby(['trial', 'run']).cumcount()
+df['trial_time_index'] = df.groupby(['video', 'run']).cumcount()
 
+print(missing_vals.head(100))
+print('\n\nfinal df')   
+print(df.head())
 print(f'number of samples = {len(df)}')
 print(df.dtypes)
-
-print('\n\nfinal df') 
-print(df.head(10))
 df.to_csv(f'processed_data/{subj}.csv', index=False)

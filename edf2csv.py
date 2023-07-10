@@ -10,7 +10,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 pd.set_option('mode.chained_assignment',  None)
 
-subj = 'subj003'
+subj = 'subj005'
 Path(f'data/{subj}/asc').mkdir(exist_ok=True, parents=True)
 out_data = []
 for run in range(2):
@@ -65,7 +65,6 @@ for run in range(2):
         df_ev_pivot = df_ev_pivot.join(df_runfile)
         print('\n\nreorganized events')
         print(df_ev_pivot.head())
-        df_ev_pivot.to_csv('testing_code.csv')
 
         for i, row in df_ev_pivot.iterrows():
             onset = row.STIMULUS_START
